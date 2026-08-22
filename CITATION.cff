@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use MAF, please cite this research package and its authored specifications."
 title: "MAF: Mechanism–Artifact Factorization"
-version: 1.1.0
+version: 1.1.1
 type: software
 authors:
   - given-names: VAG-gomi
