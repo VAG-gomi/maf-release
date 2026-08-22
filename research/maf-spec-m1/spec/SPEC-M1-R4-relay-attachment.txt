@@ -1,0 +1,86 @@
+
+```
+================================================================================
+SPEC-M1-R4: AUTHOR RESOLUTIONS TO DEVIATIONS 025-027 (BINDING)
+================================================================================
+
+AUTHOR-ERR-014: Three execution-procedure gaps confirmed (D-025..D-027),
+all of the deferred-detail class. Resolved below. No thresholds change;
+no pre-registered criterion is touched. Pure procedure binding.
+
+R4-001 (D-025) — BASELINE TRAINING PROCEDURES, EXACT:
+  B-POOL: MLP 6->16(tanh)->1 linear, biases, PyTorch default init.
+    Training: the R3-001 loop with environments 1..20 in ascending order,
+    300 epochs (6000 steps), batch = all rows of the current environment
+    (trial envs: 400 obs + 100 interventional), loss = mean Gaussian NLL
+    over the batch (single head serves both row types), plus 1e-4 weight
+    decay on all parameters. No psi/U terms exist. Adam lr 1e-3.
+  B-ENVNN: identical loop, batch, loss, and weight decay as B-POOL.
+    Differences, enumerated: (a) input is x_full CONCATENATED with a
+    learned 4-dim environment embedding; (b) embedding table has 25 rows
+    (one per environment id), init N(0, 0.01), trainable; (c) holdout
+    envs use the ZERO embedding row (declared handicap, unchanged);
+    (d) embedding participates in both observational and interventional
+    rows identically (it has no do-awareness — that is the point).
+  B-IRML: B-POOL's architecture and loop exactly; loss gains the
+    invariance penalty: for each environment batch, add
+    lambda_iv * (mean residual over that batch)^2, where residual is
+    (y - prediction) and lambda_iv is the per-world selected value from
+    {0.1, 1.0} — selection by trial-env interventional RMSE on the
+    100-row interventional sets of envs 1..10, evaluated AFTER training
+    both candidates; the better candidate's full fit is the recorded one.
+    (Both candidates are trained; the selection is post-hoc per world,
+    which is the only selection D originally permitted.)
+  B-MIXED: unchanged from R3-003. No early stopping exists anywhere in
+    SPEC-M1; fixed step counts only.
+
+R4-002 (D-026) — VARIANT INITIALIZATION ORDER AND REGISTRATION:
+  Binding rule: each variant fit begins with torch.manual_seed
+  (world_int + 7000) IMMEDIATELY BEFORE ITS OWN CONSTRUCTION (R3-001
+  stands), and each variant's parameter registration order is its OWN
+  natural construction order, enumerated per variant:
+    V-FULL: [encoder, beta, U, psi_1..psi_20]
+    V-A0:   [encoder, beta]                    (no Gamma tensors exist)
+    V-SOFT: [encoder, beta, U, psi_1..psi_20]  (identical registration
+             to V-FULL; only branch wiring differs)
+    V-ORAC: [U_G, psi_1..psi_20]               (R3-002 wiring; no encoder)
+  Deliberately NOT bound: identical initialization DRAWS across variants.
+  Rationale, on the record: V-A0 has fewer tensors, so identical draws
+  are impossible without artificial stream alignment; and the comparison
+  of interest is between DISTRIBUTIONS over 30 worlds (medians), not
+  paired per-world deltas, so init noise is averaged out by design.
+  Forcing fake alignment would add a coupling the design never claimed.
+  This is declared as an accepted asymmetry, not an oversight.
+
+R4-003 (D-027) — HOLDOUT ADAPTATION AND EVALUATION, EXACT:
+  Adaptation applies to: V-FULL, V-A0, V-SOFT. NOT to V-ORAC (its channel
+  is a diagnostic probe with no adaptation semantics — its holdout M-RMSE
+  is the analytic noise floor by construction, R3-002) and NOT to any
+  baseline (D's original asymmetry stands, declared).
+  Per holdout environment e in {21,...,25}, enumerated procedure:
+    1. Construct psi_e EXACTLY ZERO.
+    2. Trainable set: {psi_e} ONLY. All other parameters frozen at their
+       post-main-training values.
+    3. Optimizer: Adam lr 1e-2, 200 full-batch steps (single batch = all
+       400 observational rows of that environment).
+    4. Loss: mean Gaussian NLL on the OBSERVATIONAL branch only.
+    5. torch.manual_seed(world_int + 7000 + e) immediately before
+       adaptation-step construction.
+    6. After adaptation, score this environment's contribution to M-RMSE
+       via the interventional branch over the shared eval grid.
+  Evaluation grid: the 2000-point x-grid per holdout env (eval key),
+    tau in {0, 0.5, 1}, shared across all methods; V-ORAC's grid rows are
+    analytic truth + noise floor and are excluded from P1 arithmetic
+    (R3-002 stands).
+  M-PSI/M-DAUROC are computed over TRAIN environments only (F2/F3 stand);
+    holdout adaptation contributes nothing to them.
+
+EXECUTOR INSTRUCTIONS:
+  1. Append verbatim as maf_v1/spec/SPEC-M1-R4-authored.md; provenance commit.
+  2. Close DEVIATION-025..027 as resolved-by-R4-001..003 respectively.
+  3. Implementation UNBLOCKED. Run G0a then G0b; transmit gate outcomes
+     (b-scale, lambda1, best G0b correlation) BEFORE any full-run artifacts.
+================================================================================
+END SPEC-M1-R4
+================================================================================
+```

@@ -1,0 +1,10 @@
+{
+  "fit_seconds": 4.187492105000274,
+  "lambda_iv": null,
+  "m_dauroc": null,
+  "m_psi": null,
+  "method": "B-POOL",
+  "rmse_heavy": 0.3943411870826327,
+  "rmse_holdout": 0.39481171021798034,
+  "seed": 2003
+}

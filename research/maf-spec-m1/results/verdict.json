@@ -1,0 +1,59 @@
+{
+  "n_methods": 8,
+  "n_worlds": 30,
+  "summary": [
+    {
+      "statistic": "g0a_pass_scale",
+      "value": 1.0
+    },
+    {
+      "statistic": "g0b_lambda1_chosen",
+      "value": 0.001
+    },
+    {
+      "statistic": "g0b_best_correlation",
+      "value": 0.9998984945969449
+    },
+    {
+      "statistic": "p1_vfull_rmse_median",
+      "value": 0.14646940341878317
+    },
+    {
+      "statistic": "p1_best_baseline_name",
+      "value": "B-MIXED"
+    },
+    {
+      "statistic": "p1_best_baseline_rmse_median",
+      "value": 0.3399518624815555
+    },
+    {
+      "statistic": "p1_relative_reduction",
+      "value": 0.5691466363808199
+    },
+    {
+      "statistic": "p2_mpsi_median",
+      "value": 0.7842105263157895
+    },
+    {
+      "statistic": "p3_mdauroc_median",
+      "value": 0.895
+    },
+    {
+      "statistic": "k1_gap_percent",
+      "value": 161.05665741791586
+    },
+    {
+      "statistic": "k2_gap_percent",
+      "value": 250.77287923221172
+    },
+    {
+      "statistic": "k4_vorac_mpsi_median",
+      "value": 0.9969924812030074
+    },
+    {
+      "statistic": "verdict_label",
+      "value": "PASS"
+    }
+  ],
+  "verdict_label": "PASS"
+}

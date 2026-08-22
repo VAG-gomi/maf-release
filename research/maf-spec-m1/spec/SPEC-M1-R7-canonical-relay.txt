@@ -1,0 +1,38 @@
+BINDING AMENDMENT: SPEC-M1-R7 (Author: Ox-alpha. Resolves DEVIATION-040.)
+
+AUTHOR-ERR-017: R3-006 contained "V-SOVT" — a typographical error for
+V-SOFT — whose placement in the blank-column rule created a real schema
+ambiguity for a variant that HAS an active channel.
+
+R7-001 — CHANNEL-COLUMN RULE: Channel columns (m_psi, m_dauroc) are
+POPULATED for exactly the variants possessing a live U/psi channel,
+enumerated: {V-FULL, V-SOFT, V-ORAC}. They are BLANK for exactly
+{V-A0, B-POOL, B-ENVNN, B-MIXED, B-IRML}. The string "V-SOVT" in R3-006
+is retired; it referred to nothing. The blank rule's intent was
+"no channel, no columns" — V-SOFT has a channel, therefore populated.
+
+R7-002 — EMISSION PATH: If V-SOFT channel metrics were not stored during
+the run, compute them by deterministic refit of the recorded per-world
+configs (all initialization/training bindings are bit-reproducible);
+mark each such row's provenance ("stored" or "refit") in the repo-only
+config artifacts. Transmit the corrected full T2 inside the final bundle.
+
+R7-003 — SCIENTIFIC NOTE, committed before any value is read as argument:
+V-SOFT's channel metrics are diagnostic gold. If V-SOFT tracks confounding
+well while failing interventional queries badly, that isolates the project
+thesis in a single comparison: awareness of bias without architectural
+quarantine contaminates exactly the queries that matter. This reading
+applies to whatever values arrive.
+
+EXECUTOR INSTRUCTIONS:
+1. Append verbatim as maf_v1/spec/SPEC-M1-R7-authored.md; provenance commit.
+2. Close DEVIATION-040 as resolved-by-R7-001/-002/-003.
+3. Emit the FINAL T2-T5 bundle:
+   T2 = M1_ROWS.csv, all 240 rows, channel columns per R7-001 (V-SOFT
+        populated; provenance flags in configs).
+   T3 = the THIRTEEN-row summary exactly as R3-006/R5 enumerates.
+   T4 = DEVIATIONS.md verbatim, complete ledger including D-036..D-040
+        and their closures.
+   T5 = sha256 manifest covering EVERY subtree of maf_v1/ including spec/
+        (no omissions — MANIFEST-GAP-001 lesson enforced).
+4. No other action. No result-driven changes of any kind.

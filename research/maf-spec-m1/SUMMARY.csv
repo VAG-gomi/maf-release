@@ -1,0 +1,14 @@
+statistic,value
+g0a_pass_scale,1.0
+g0b_lambda1_chosen,0.001
+g0b_best_correlation,0.9998984945969449
+p1_vfull_rmse_median,0.14646940341878317
+p1_best_baseline_name,B-MIXED
+p1_best_baseline_rmse_median,0.3399518624815555
+p1_relative_reduction,0.5691466363808199
+p2_mpsi_median,0.7842105263157895
+p3_mdauroc_median,0.895
+k1_gap_percent,161.05665741791586
+k2_gap_percent,250.77287923221172
+k4_vorac_mpsi_median,0.9969924812030074
+verdict_label,PASS

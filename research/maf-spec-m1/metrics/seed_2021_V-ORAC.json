@@ -1,0 +1,10 @@
+{
+  "fit_seconds": 3.1241630540025653,
+  "lambda_iv": null,
+  "m_dauroc": 0.8699999999999999,
+  "m_psi": 0.9909774436090225,
+  "method": "V-ORAC",
+  "rmse_heavy": 0.0,
+  "rmse_holdout": 0.0,
+  "seed": 2021
+}

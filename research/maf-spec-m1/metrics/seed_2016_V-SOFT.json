@@ -1,0 +1,10 @@
+{
+  "fit_seconds": 13.786040712999238,
+  "lambda_iv": null,
+  "m_dauroc": null,
+  "m_psi": null,
+  "method": "V-SOFT",
+  "rmse_heavy": 0.5385210105766294,
+  "rmse_holdout": 0.46306243850320794,
+  "seed": 2016
+}

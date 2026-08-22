@@ -1,0 +1,10 @@
+{
+  "fit_seconds": 4.124086529998749,
+  "lambda_iv": 1.0,
+  "m_dauroc": null,
+  "m_psi": null,
+  "method": "B-IRML",
+  "rmse_heavy": 0.3556262611000434,
+  "rmse_holdout": 0.35494502655496346,
+  "seed": 2016
+}

@@ -1,0 +1,10 @@
+{
+  "fit_seconds": 5.083785099999659,
+  "lambda_iv": null,
+  "m_dauroc": null,
+  "m_psi": null,
+  "method": "B-ENVNN",
+  "rmse_heavy": 0.5127747485220484,
+  "rmse_holdout": 0.5126944707643671,
+  "seed": 2017
+}
