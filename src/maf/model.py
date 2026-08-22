@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import math
 import time
+import warnings
 from dataclasses import dataclass
 from typing import Any
 
@@ -86,6 +87,15 @@ class MAFModel(torch.nn.Module):
             return self._adapted_psi[env_id]
         return torch.zeros(self.r, dtype=self.beta.dtype, device=self.beta.device)
 
+    @staticmethod
+    def _validate_tau(tau: np.ndarray | float) -> np.ndarray:
+        tau_arr = np.asarray(tau, dtype=float)
+        invalid = (tau_arr < 0.0) | (tau_arr > 1.0)
+        if bool(np.any(invalid)):
+            offending = float(tau_arr[invalid].reshape(-1)[0])
+            raise ValueError(f"tau value {offending} outside [0, 1]")
+        return tau_arr
+
     def _pred_tensor(
         self,
         x: torch.Tensor,
@@ -114,10 +124,17 @@ class MAFModel(torch.nn.Module):
         return 0.5 * torch.mean(((target - pred) / SIGMA) ** 2 + 2.0 * math.log(SIGMA))
 
     def fit(self, environments: list[dict[str, Any]]) -> FitReport:
-        """Fit on ascending environments with 300 epochs and one optimizer step per environment."""
+        """Fit on ascending environments with 300 epochs and one optimizer step per environment.
+
+        Input environments are sorted by ``env_id`` ascending; records without an
+        ``env_id`` use their one-based positional index for sorting.
+        """
+        if self._fit_report is not None:
+            warnings.warn("refitting over previously fitted model", RuntimeWarning)
         if len(environments) < N_TRAIN_ENVS:
             raise ValueError("fit requires at least 20 training environments")
-        self._train_envs = list(environments[:N_TRAIN_ENVS])
+        keyed = [(int(env.get("env_id", index + 1)), index, env) for index, env in enumerate(environments)]
+        self._train_envs = [env for _, _, env in sorted(keyed, key=lambda item: (item[0], item[1]))[:N_TRAIN_ENVS]]
         self._adapted_psi.clear()
         self._next_adapt_env_id = N_TRAIN_ENVS + 1
         started = time.monotonic()
@@ -159,6 +176,9 @@ class MAFModel(torch.nn.Module):
         environments are therefore assigned deterministic slots 21, 22, ... in
         adaptation-call order; the assigned slot is returned in ``AdaptReport``.
         """
+        if self._fit_report is None:
+            raise RuntimeError("model not fitted: call fit() first")
+        tau_arr = self._validate_tau(tau_obs)
         env_id = self._next_adapt_env_id
         self._next_adapt_env_id += 1
         started = time.monotonic()
@@ -168,7 +188,7 @@ class MAFModel(torch.nn.Module):
         psi_new = torch.nn.Parameter(torch.zeros(self.r, dtype=torch.float32))
         optimizer = torch.optim.Adam([psi_new], lr=float(lr))
         x = torch.as_tensor(np.asarray(x_obs, dtype=np.float32))
-        tau = torch.as_tensor(np.asarray(tau_obs, dtype=np.float32))
+        tau = torch.as_tensor(np.asarray(tau_arr, dtype=np.float32))
         y = torch.as_tensor(np.asarray(y_obs, dtype=np.float32))
         frozen = [parameter.requires_grad for parameter in self.parameters()]
         try:
@@ -188,8 +208,10 @@ class MAFModel(torch.nn.Module):
 
     def predict_interventional(self, x: np.ndarray, tau: np.ndarray) -> np.ndarray:
         """Predict under intervention using the beta channel only."""
+        if self._fit_report is None:
+            raise RuntimeError("model not fitted: call fit() first")
         x_np = np.asarray(x, dtype=np.float32)
-        tau_np = np.asarray(tau, dtype=np.float32).reshape(-1)
+        tau_np = np.asarray(self._validate_tau(tau), dtype=np.float32).reshape(-1)
         x_tensor = torch.as_tensor(x_np)
         tau_tensor = torch.as_tensor(tau_np)
         with torch.no_grad():
@@ -197,19 +219,25 @@ class MAFModel(torch.nn.Module):
 
     def predict_observational(self, x: np.ndarray, tau: np.ndarray, env_id: int) -> np.ndarray:
         """Predict observationally, including the environment artifact channel."""
+        if self._fit_report is None:
+            raise RuntimeError("model not fitted: call fit() first")
         x_np = np.asarray(x, dtype=np.float32)
-        tau_np = np.asarray(tau, dtype=np.float32).reshape(-1)
+        tau_np = np.asarray(self._validate_tau(tau), dtype=np.float32).reshape(-1)
         with torch.no_grad():
             return self._pred_tensor(torch.as_tensor(x_np), torch.as_tensor(tau_np), int(env_id), "obs").cpu().numpy()
 
     def psi_norms(self) -> dict[int, float]:
         """Return train-environment artifact magnitudes."""
+        if self._fit_report is None:
+            raise RuntimeError("model not fitted: call fit() first")
         return {i + 1: float(torch.linalg.vector_norm(parameter).detach().cpu()) for i, parameter in enumerate(self.psi)}
 
     def artifact_score(self, x: np.ndarray, tau: np.ndarray, env_id: int) -> float:
         """Return mean absolute artifact contribution for one environment."""
+        if self._fit_report is None:
+            raise RuntimeError("model not fitted: call fit() first")
         x_tensor = torch.as_tensor(np.asarray(x, dtype=np.float32))
-        tau_tensor = torch.as_tensor(np.asarray(tau, dtype=np.float32).reshape(-1))
+        tau_tensor = torch.as_tensor(np.asarray(self._validate_tau(tau), dtype=np.float32).reshape(-1))
         with torch.no_grad():
             ph = self.phi(x_tensor, tau_tensor)
             contribution = ph @ (self.U @ self._psi_for_env(int(env_id)))

@@ -108,3 +108,42 @@ After the initial out-of-order observation, F6 was executed and passed, followed
 ## DEVIATION-052 resolution status — manifest self-entry
 
 The release manifest covers every other file under `maf_release/`, including all specification and evidence subtrees, and excludes only its own self-entry because a file cannot contain a stable hash of its own changing contents. This follows the existing project manifest convention. The exact covered-file count and self-exclusion are disclosed in `verification/VERIFY.md`.
+
+
+## DEVIATION-053 — SPEC-M3 start status ping created after registration edits
+
+**Stage:** SPEC-M3 hardening-cycle initialization.
+
+SPEC-M3 F requires a start status ping. The executor registered AC-001 and SPEC-M3 and applied the bound hardening edits before creating the start status file. This is an execution-sequencing deviation: the required start ping was not the first hardening-work artifact. No scientific result was read or used to choose a code change, and no main-branch or GitHub artifact was modified. The start status will now be created before the formal acceptance battery; the omission is preserved here rather than silently backfilled.
+
+
+## DEVIATION-053 closure — resolved by explicit disclosure and completion ping
+
+The required start status is now present at `STATUS.md`, and the sequencing issue remains disclosed in the final verification report. The hardening acceptance battery was executed after that status checkpoint. No scientific code, threshold, anchor, or result was changed to resolve D-053.
+
+
+## DEVIATION-054 — Initial GitHub publish archive source-path error
+
+**Stage:** SPEC-M3 §G merge/tag/push preparation.
+
+The first publish-preparation command attempted to archive the package with:
+
+```text
+git archive --format=tar /home/ubuntu/cfhm_f1 main:maf_release | tar -x
+```
+
+Git reported:
+
+```text
+fatal: not a valid object name: /home/ubuntu/cfhm_f1
+tar: This does not look like a tar archive
+tar: Exiting with failure status due to previous errors
+```
+
+No GitHub mutation occurred. The remote repository remained unchanged. This was a local command-construction error, corrected by invoking `git -C /home/ubuntu/cfhm_f1 archive --format=tar main:maf_release`.
+
+## DEVIATION-055 — Publish staging count checked before staging
+
+**Stage:** SPEC-M3 §G merge/tag/push preparation.
+
+The corrected archive extraction succeeded, but the second preparation command measured `git ls-files` before running `git add -A`. It therefore reported `package_file_count=0` and stopped at the bound expected count check of 41. No commit, tag, or GitHub push occurred. The remote repository remained unchanged. This was a local staging-order tooling error, not a package or scientific result; the next attempt will count filesystem files before staging and then verify the committed tree after staging.

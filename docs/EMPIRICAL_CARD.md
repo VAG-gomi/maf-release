@@ -29,3 +29,5 @@ Release code reproduces pre-release results to within 2e-7 RMSE (float reassocia
 ## Interpretation boundaries
 
 This card reports the authored synthetic experiment only. It is not evidence of real-world performance, clinical validity, operational reliability, or deployment safety.
+
+Kill conditions that would have falsified this result (K1-K4) are enumerated in spec/SPEC-M1-authored.md §G2.

@@ -1,4 +1,4 @@
-# MAF Release 1.0 API
+# MAF Release 1.1 API
 
 The public surface is intentionally limited to `maf.generate_world` and `maf.MAFModel`. Supporting metric and I/O modules are importable for research workflows but are not additional model surfaces.
 
@@ -22,13 +22,29 @@ MAFModel(
 )
 ```
 
-The release binds `hidden=16` and `r=2`; passing other values raises `ValueError` rather than silently changing the architecture.
+The release binds `hidden=16` and `r=2`; passing other values raises `ValueError` rather than silently changing the architecture. The default `lambda1` is `0.001`, frozen by the SPEC-M1 G0b calibration.
+
+All fitted-model entry points below require `fit()` first. Before fitting, they raise:
+
+```text
+RuntimeError("model not fitted: call fit() first")
+```
+
+All treatment values supplied to prediction or adaptation entry points must be in the inclusive interval `[0, 1]`. An out-of-range value raises `ValueError` whose message includes the offending value. Calling `fit()` on an already fitted model remains permitted but emits:
+
+```text
+RuntimeWarning("refitting over previously fitted model")
+```
+
+### `model.fit`
 
 ```python
 model.fit(environments: list[EnvData]) -> FitReport
 ```
 
-Fits 300 epochs with ascending environments and one optimizer step per environment per epoch. Observational rows and available trial interventional rows are included with equal row weighting. `FitReport` exposes `steps`, `epochs`, `environments`, and `duration_seconds`.
+Fits 300 epochs with one optimizer step per environment per epoch. Input environments are sorted by ascending `env_id` before the first 20 training records are selected. Records without `env_id` use their one-based positional index for sorting. Observational rows and available trial interventional rows are included with equal row weighting. `FitReport` exposes `steps`, `epochs`, `environments`, and `duration_seconds`.
+
+### `model.adapt`
 
 ```python
 model.adapt(
@@ -40,13 +56,17 @@ model.adapt(
 ) -> AdaptReport
 ```
 
-Creates a fresh zero-initialized `psi_new`, freezes the fitted model, and trains only the new artifact vector. `AdaptReport` exposes the assigned new environment ID, steps, learning rate, duration, and copied `psi_new` values.
+Creates a fresh zero-initialized `psi_new`, freezes the fitted model, and trains only the new artifact vector. Treatment validation is applied before adaptation. `AdaptReport` exposes the assigned new environment ID, steps, learning rate, duration, and copied `psi_new` values.
+
+### `model.predict_interventional`
 
 ```python
 model.predict_interventional(x: numpy.ndarray, tau: numpy.ndarray) -> numpy.ndarray
 ```
 
-Predicts using the beta mechanism channel only. Changing `U` or training-environment `psi` values cannot change these outputs.
+Predicts using the beta mechanism channel only. Changing `U` or training-environment `psi` values cannot change these outputs. The model must be fitted and treatment values must lie in `[0, 1]`.
+
+### `model.predict_observational`
 
 ```python
 model.predict_observational(
@@ -56,13 +76,17 @@ model.predict_observational(
 ) -> numpy.ndarray
 ```
 
-Predicts using the mechanism channel plus the artifact channel for the specified environment. For a new environment before adaptation, the artifact vector is exactly zero.
+Predicts using the mechanism channel plus the artifact channel for the specified environment. For a new environment before adaptation, the artifact vector is exactly zero. The model must be fitted and treatment values must lie in `[0, 1]`.
+
+### `model.psi_norms`
 
 ```python
 model.psi_norms() -> dict[int, float]
 ```
 
-Returns the L2 norm of each training-environment artifact vector, keyed by environment ID.
+Returns the L2 norm of each training-environment artifact vector, keyed by environment ID. The model must be fitted.
+
+### `model.artifact_score`
 
 ```python
 model.artifact_score(
@@ -72,7 +96,16 @@ model.artifact_score(
 ) -> float
 ```
 
-Returns the mean absolute artifact contribution `mean(abs(phi(x_full,tau)^T(U psi_e)))` for the specified environment.
+Returns the mean absolute artifact contribution `mean(abs(phi(x_full,tau)^T(U psi_e)))` for the specified environment. The model must be fitted and treatment values must lie in `[0, 1]`.
+
+## Misuse behavior
+
+| Call | Bound behavior |
+|---|---|
+| Any prediction, adaptation, `psi_norms()`, or `artifact_score()` before `fit()` | Raises `RuntimeError("model not fitted: call fit() first")` |
+| Any prediction or adaptation with a treatment outside `[0, 1]` | Raises `ValueError` including the offending value |
+| `fit()` called after a completed fit | Emits `RuntimeWarning("refitting over previously fitted model")` and proceeds |
+| `fit()` input records | Sorted by ascending `env_id`; missing IDs use positional index + 1 |
 
 ## Supporting research helpers
 

@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use MAF, please cite this research package and its authored specifications."
+title: "MAF: Mechanism–Artifact Factorization"
+version: 1.1.0
+type: software
+authors:
+  - given-names: VAG-gomi
+    email: vag-gomi@users.noreply.github.com
+    affiliation: "VAG-gomi"
+repository-code: "https://github.com/VAG-gomi/maf-release"
+license: MIT
+abstract: >-
+  Validated in synthetic confound-heavy environments with analytic ground truth
+  (30 worlds, pre-registered criteria, independent execution). NOT validated on
+  real-world data.
+date-released: 2026-08-22
+keywords:
+  - mechanism–artifact factorization
+  - causal inference
+  - synthetic experiment
+  - do-mask

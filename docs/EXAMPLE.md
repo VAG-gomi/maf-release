@@ -1,4 +1,4 @@
-# MAF Release 1.0 Example
+# MAF Release 1.1 Example
 
 The following values were produced by executing `python3 examples/run_example.py` on seed 2000 under the release code. They are measured output, not illustrative or invented values.
 
