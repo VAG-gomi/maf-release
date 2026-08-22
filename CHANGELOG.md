@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here in Keep a Changelog format.
 
+## [1.1.1] - 2026-08-22
+
+### Changed
+
+- Restricted supported Python to `>=3.12`: pinned runtime dependencies lack Python 3.10 distributions; certification was performed on Python 3.12. No behavioral change.
+
 ## [1.1.0] - 2026-08-22
 
 ### Added

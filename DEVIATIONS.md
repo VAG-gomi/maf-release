@@ -147,3 +147,115 @@ No GitHub mutation occurred. The remote repository remained unchanged. This was 
 **Stage:** SPEC-M3 §G merge/tag/push preparation.
 
 The corrected archive extraction succeeded, but the second preparation command measured `git ls-files` before running `git add -A`. It therefore reported `package_file_count=0` and stopped at the bound expected count check of 41. No commit, tag, or GitHub push occurred. The remote repository remained unchanged. This was a local staging-order tooling error, not a package or scientific result; the next attempt will count filesystem files before staging and then verify the committed tree after staging.
+
+
+## DEVIATION-056 — Runtime dependency pins unavailable for bound Python 3.10 CI
+
+**Stage:** Post-push SPEC-M3 CI audit, before any correction.
+
+The GitHub Actions `install-and-test` job failed during `pip install .` for Python 3.10. The screenshot showed the first failure at the pinned NumPy requirement:
+
+```text
+ERROR: No matching distribution found for numpy==2.5.1
+Error: Process completed with exit code 1.
+```
+
+A workflow-equivalent package-index audit for the bound Python 3.10 target found that all four exact runtime pins lack compatible Python 3.10 distributions, although the same versions are available for Python 3.12:
+
+```text
+numpy==2.5.1  -> unavailable for Python 3.10; numpy==2.2.6 available
+pandas==3.0.5 -> unavailable for Python 3.10; pandas==2.3.2 available
+scipy==1.18.0 -> unavailable for Python 3.10; scipy==1.15.3 available
+torch==2.13.0 -> Python 3.10 wheel available in the index audit
+```
+
+The exact compatible replacement set for the first three packages is not authored by SPEC-M3, and changing pandas or SciPy versions could affect numerical behavior. No dependency pin has been changed. The issue is recorded on isolated branch `ci-fix`, and author/relay selection is required before applying any replacement version set.
+
+
+## DEVIATION-054 closure — acknowledged by SPEC-M3-R1-004
+
+The invalid archive source-path command was a local tooling error, produced no repository or GitHub mutation, and was corrected before the successful publish. Closed as acknowledged by the author ruling.
+
+## DEVIATION-055 closure — acknowledged by SPEC-M3-R1-004
+
+The pre-staging file-count check was a local tooling-order error, produced no repository or GitHub mutation, and was corrected before the successful publish. Closed as acknowledged by the author ruling.
+
+## DEVIATION-056 closure — resolved by SPEC-M3-R1-001
+
+The author retained the exact reproducibility pins and narrowed the supported Python version to `>=3.12`, because the 3.10 wheel-availability claim was untested and false for the pinned NumPy, pandas, and SciPy versions. The correction is authorized for branch `ci-fix`; no runtime dependency pin is changed.
+
+
+## DEVIATION-057 — Local R1 installation invoked from outer repository root
+
+**Stage:** SPEC-M3-R1 acceptance A, fresh-install check.
+
+The first local acceptance command created the fresh virtual environment but invoked `pip install .` while the shell was in `/home/ubuntu/cfhm_f1` instead of `/home/ubuntu/cfhm_f1/maf_release`. The exact result was:
+
+```text
+ERROR: Directory '.' is not installable. Neither 'setup.py' nor 'pyproject.toml' found.
+install_status=1
+```
+
+No package file, model code, scientific artifact, GitHub repository, or main branch was changed by this failed invocation. The prior-tree spot checks in the same command passed. This is a local command-directory error; the acceptance will be rerun from the package root as authorized.
+
+
+## DEVIATION-057 closure — resolved by correct package-root invocation
+
+The fresh Python 3.12 installation was rerun from `/home/ubuntu/cfhm_f1/maf_release`. Installation exited 0, import returned `1.1.1`, and the full nine-test suite passed with zero skips or expected failures. No dependency pin, model code, scientific artifact, or acceptance anchor was changed.
+
+
+## DEVIATION-058 — Outer research repository has no configured origin
+
+**Stage:** SPEC-M3-R1 R1-003 C, confirmed ci-fix push.
+
+The confirmed push command was first attempted from the outer research repository with:
+
+```text
+git push origin ci-fix
+```
+
+The exact result was:
+
+```text
+fatal: 'origin' does not appear to be a git repository
+fatal: Could not read from remote repository.
+Please make sure you have the correct access rights
+and the repository exists.
+```
+
+No GitHub mutation occurred. The outer repository intentionally has no configured `origin`; the next attempt will use the explicit approved URL `https://github.com/VAG-gomi/maf-release.git`. This is a local remote-configuration error, not a package or CI result.
+
+
+## DEVIATION-059 — ci-fix first push placed workflow below repository root
+
+**Stage:** SPEC-M3-R1 R1-003 C, actual GitHub Actions verification.
+
+The confirmed `ci-fix` push was performed from the outer research repository. As a result, GitHub received the release package at `maf_release/` with the workflow at `maf_release/.github/workflows/tests.yml`, rather than with the package contents and workflow at the GitHub repository root. GitHub Actions registered the workflow on the repository but created no run for ci-fix commit `a07b750ddfc0b7f75c8f106f816fbd95dc1b590f`; the only recent runs remained the earlier v1.1.0 main/tag failures.
+
+No `main` branch change or tag change occurred during this failed ci-fix verification. This is a repository-layout publishing error, not a package or scientific result. The correction is to rebuild ci-fix from the package-root tree and update that branch before evaluating the actual CI check.
+
+
+## DEVIATION-060 — Corrected package total is 42 files including manifest
+
+**Stage:** SPEC-M3-R1 R1-003 C, corrected repository-root ci-fix staging.
+
+The corrected package-root extraction succeeded, but the preparation command stopped at a stale expected total of 41:
+
+```text
+filesystem_count=42
+```
+
+The current package contains 41 manifest-covered files plus `ARTIFACT_MANIFEST.sha256` itself, for 42 total files. The earlier count of 41 referred to the non-manifest entries before `SPEC-M3-R1-authored.md` was registered. No commit or GitHub mutation occurred in this attempt. The next attempt will require 41 manifest entries and 42 total files, consistent with the manifest’s non-recursive self-exclusion convention.
+
+
+## DEVIATION-061 — ci-fix branch has no common Git history with GitHub main
+
+**Stage:** SPEC-M3-R1 R1-003 C, merge after green ci-fix CI.
+
+The authorized merge attempt created no pull request because GitHub returned:
+
+```text
+pull request create failed: GraphQL: The ci-fix branch has no history in common with main (createPullRequest)
+```
+
+The outer research repository’s `ci-fix` history and the GitHub package repository’s `main` history are unrelated, even though the ci-fix tree content was verified byte-for-byte. No GitHub main, tag, or release changed. The next correction will preserve the existing package-root ci-fix commit as a parent and create a common-history mergeable branch before retrying the authorized main merge.

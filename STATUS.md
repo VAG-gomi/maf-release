@@ -1,11 +1,13 @@
-# SPEC-M3 Status — Completion
+# SPEC-M3-R1 Status — 1.1.1 Local Acceptance
 
-**Stage:** MAF Release 1.1.0 hardening cycle completed on branch `hardening`.
+**Stage:** Support-boundary correction on isolated branch `ci-fix`.
 
-**Acceptance:** F1–F8 PASS. Fresh installation/import returned version `1.1.0`; all nine tests passed with zero skips/xfails; D4 RMSE, M-PSI, and M-DAUROC anchors passed; D5 determinism passed; required files/content passed; misuse probes now produce the specified RuntimeError, ValueError, and RuntimeWarning; the final SHA-256 manifest passed; and three prior-tree spot checks matched exactly.
+**Authorization:** SPEC-M3-R1 retained the exact runtime dependency pins and narrowed supported Python to `>=3.12` after the first GitHub Actions install failure on Python 3.10.
 
-**Scientific preservation:** RMSE remained `0.1118193525252465`, M-PSI remained `0.9082706766917292`, and the do-mask and deterministic tests passed. No acceptance tolerance was loosened.
+**Local acceptance:** PASS. A fresh Python 3.12 environment installed the package successfully, import returned `1.1.1`, and the complete nine-test suite passed with zero skips or expected failures. D4 anchors and prior-tree spot checks passed unchanged.
 
-**Provenance:** AC-001 and SPEC-M3 are preserved verbatim under `spec/`. DEVIATION-053 records the start-ping sequencing issue and its closure. Main remains at certified v1.0.0 commit `70e60a3805f3444706493713a986094a6072c7f3`; no GitHub action was performed.
+**Exact pins:** NumPy 2.5.1, pandas 3.0.5, SciPy 1.18.0, and PyTorch 2.13.0 remain unchanged.
 
-**Release status:** The `hardening` branch is eligible for separate relay review. Per SPEC-M3 §G, merging into `main`, tagging `v1.1.0`, and pushing to GitHub require separate confirmation. GitHub Release publication remains a separate human decision.
+**Remaining R1-003 gate:** Push `ci-fix` to GitHub and require the actual single Python 3.12 Actions job to finish green. Only after that check may the patch be merged to `main` and tag `v1.1.1` be created and pushed. The existing `v1.1.0` tag remains unchanged.
+
+**External status:** An initial ci-fix push occurred with the package nested below the GitHub repository root, so no valid workflow run was created; this is recorded as DEVIATION-059. Main and the existing `v1.1.0` tag remain unchanged. A corrected repository-root ci-fix push is required before the R1-003 CI gate can be evaluated. The corrected package contains 42 total files: 41 manifest-covered files plus the manifest itself, as recorded in DEVIATION-060. GitHub rejected the first merge attempt because ci-fix had no common history with main; DEVIATION-061 records that the branch will be rebuilt with main as its parent before retrying the merge.

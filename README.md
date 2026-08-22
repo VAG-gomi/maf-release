@@ -10,7 +10,7 @@ Why the do-mask matters: an otherwise-identical variant without it (V-SOFT) trac
 
 ## Installation
 
-From a clean Python 3.10-or-newer environment:
+From a clean Python 3.12-or-newer environment:
 
 ```bash
 python -m pip install .

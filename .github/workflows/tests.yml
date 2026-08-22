@@ -8,7 +8,7 @@ jobs:
   install-and-test:
     strategy:
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.12"]
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
