@@ -1,0 +1,182 @@
+================================================================================
+SPEC-M1: MAF EXECUTION — MECHANISM–ARTIFACT FACTORIZATION, FIRST RUN (BINDING)
+Author: Ox-alpha. Relay: user. Executor: Manus. Version: 1.0.
+Governing rules: executor §0 rules apply UNCHANGED (stop-and-record verbatim;
+never improvise; nothing dropped; no tuning after any result is seen).
+Standing amendment R2-002: every cardinality in this document is an explicit
+enumeration; prose counts are prohibited and void where found.
+================================================================================
+
+A. PURPOSE AND HONEST SCOPE
+  A1. MAF claims: in multi-environment data where observational records are
+      confounded per environment but interventional data is scarce, a
+      two-channel model (global beta + quarantined environment artifact
+      Gamma = U psi_e, masked out of interventional queries) yields better
+      interventional prediction in NEW environments than baselines, and its
+      artifact channel tracks planted confounding.
+  A2. Regime declaration: the generator below is confound-heavy BY DESIGN.
+      This is legitimate: the design's claim was always scoped to the
+      confound-heavy regime, and no result yet exists anywhere for MAF.
+      Choosing the claimed regime before any run is experimental design,
+      not goalpost-moving. Declared so it cannot later be misread.
+  A3. Status: falsifiable proposal. Nothing works until these gates say so.
+
+B. WORLD GENERATOR (ground truth; analytic interventional truth available)
+  B1. Worlds: seeds W = {2000, 2001, ..., 2029} — 30 worlds, enumerated.
+  B2. Per world: 25 environments, enumerated e = 1..25.
+      Train environments: {1..20}    (enumerated count: 20)
+      Trial environments:  {1..10}   (subset with interventions; count: 10)
+      Holdout-new environments: {21,22,23,24,25}  (count: 5)
+  B3. Covariates x in R^5, components iid standard normal per sample.
+      Feature map z(x) = [1, x1, x2, x3, x4, x5, x3^2, x4*x5] in R^8.
+  B4. True mechanism (per world, drawn once):
+      theta in R^8, entries iid N(0,1)/sqrt(8); treatment effect
+      kappa ~ Uniform[0.5, 1.5]; noise epsilon ~ N(0, 0.5^2).
+      INTERVENTIONAL TRUTH (analytic): mu*(x, tau) = theta.z(x) + kappa*tau.
+  B5. Confounding mechanism per environment e:
+      latent severity h ~ N(0,1);
+      assignment: tau ~ Bernoulli(sigmoid(a_e + b_e * h));
+      outcome: y = theta.z(x) + kappa*tau + eta*h + eps,
+        eta = 1.0 fixed; b_e = rho_e * 1.5; a_e ~ Uniform[-1, 1];
+        rho_e ~ Uniform[0, 2.0]  (rho_e near 0 = near-clean environment;
+        rho_e near 2 = heavy confounding; rho values RECORDED per env).
+      Under do(tau), the h->tau edge is cut: interventional y uses NO
+      selection distortion.
+  B6. Data volumes per environment (enumerated):
+        train envs: 400 observational samples each (tau by B5 mechanism)
+        trial envs: those same 400 PLUS 100 interventional samples
+          (tau iid Uniform{0,1}; y = theta.z(x) + kappa*tau + eps)
+        holdout envs: 400 observational samples each (never trained on)
+  B7. RNG: SeedSequence(seed).spawn(7) -> keys [world, assign, outcome,
+      sampling, model_init, adapt, eval]; integer conversion
+      int(child.generate_state(1, dtype=np.uint32)[0]); NumPy streams
+      default_rng(child); torch.manual_seed(world_int + 7000).
+  B8. SPEC-COPY REQUIREMENT (lesson AUTHOR-ERR-010): before any execution,
+      copy all SPEC-M* files into <root>/spec/. The runner may hash them.
+
+C. MODELS — ARCHITECTURE (bound hyperparameters, enumerated)
+  C1. Encoder: MLP 6 -> 16 (tanh) -> 8 linear, biases everywhere.
+      Inputs x_full = [x1..x5, tau].
+  C2. Mechanism channel beta in R^8: one global copy, small-random init
+      (N(0, 0.01)).
+  C3. Artifact channel: U in R^{8x2} (r = 2 archetypes), psi_e in R^2 per
+      train environment. U init N(0, 0.01); psi_e init EXACTLY ZERO.
+  C4. Branches:
+      observational: mu_obs = phi(x_full).^T (beta + U psi_e)
+      interventional: mu_int = phi(x_full with tau substituted).^T beta
+      (Gamma participates ONLY in the observational branch — the do-mask.)
+  C5. Loss: Gaussian NLL both branches + lambda1 * sum_e ||psi_e||_2
+      + 1e-4 * ||all weights||^2. lambda1 selected ONCE by gate G0b (§E),
+      frozen for all runs.
+  C6. Optimizer: Adam lr 1e-3, 300 epochs full-batch per environment-batch
+      loop as implemented; hazards none — continuous outcomes.
+
+D. VARIANTS AND BASELINES (complete closed-world set; 8 fits per world;
+   8 x 30 = 240 fits total, enumerated):
+   Variants:
+     V-FULL : C1-C6 as bound.
+     V-A0   : Gamma STRUCTURALLY REMOVED (beta-only). Decoration test.
+     V-SOFT : identical capacity, but Gamma enters BOTH branches
+              (no do-mask). Wiring test.
+     V-ORAC : beta REPLACED by frozen true theta; only U, psi_e trainable.
+              Identifiability test (CFHM V-ORAC lesson).
+   Baselines:
+     B-POOL : one global MLP 6->16(tanh)->1 ignoring environments.
+     B-ENVNN: MLP with a learned 4-dim embedding concatenated per
+              environment id; UNSEEN environments get the ZERO embedding
+              (declared handicap; inherent to the problem, not hidden).
+     B-MIXED: mixed-effects linear regression on z(x) with per-env random
+              intercept and random tau-coefficient; unseen envs use
+              population means (declared).
+     B-IRML : pooled MLP plus invariant-regularization: penalty
+              lambda_iv * variance_across_envs of residual-mean, applied
+              to training environments; lambda_iv in {0.1, 1.0} picked on
+              trial-env interventional error (the only permitted selection).
+   Adaptation for holdout envs (bound): MAF variants — freeze encoder and
+   beta; init psi_new = 0; 200 Adam steps lr 1e-2 on that env's
+   observational NLL; only psi_new trainable. B-POOL/B-MIXED/B-IRML: no
+   adaptation (global model applied as-is). B-ENVNN: zero embedding.
+
+E. GATES BEFORE ANY SCIENTIFIC FIT (the CFHM lesson, operationalized)
+  E1. G0a — SIGNAL-VISIBILITY PROBE (world 2000 only):
+      per environment e in {1..25}: naive OLS of y on [z(x), tau] over its
+      400 observational rows -> tau_hat_e. PASS iff
+      median_e |tau_hat_e - kappa_world| >= 3 * median_e SE(tau_hat_e).
+      If FAIL: rerun generator with b_e scale multiplied by 2, then 4
+      (deterministic ladder, enumerated: {1, 2, 4}); take first PASS;
+      RECORD which scale was used. If none passes: HALT, transmit, await
+      author. No other parameter may change.
+  E2. G0b — IDENTIFIABILITY PROBE (world 2000 only):
+      bias-only fit: oracle features z(x), ONLY U and psi_e trainable,
+      observational rows of envs {1..20}; target = y - theta.z(x) - kappa*tau.
+      Evaluate on held-out x-grid (2000 points, eval key): recovered bias
+      prediction vs true bias rho_e * v_dir.evaluation — PASS iff Pearson
+      correlation > 0.5 pooled over envs. Lambda1 := largest of
+      {1e-2, 1e-3, 1e-4} (test in that order) whose G0b run passes.
+      If NONE passes: HALT, transmit, await author. Frozen lambda1 applies
+      to every subsequent fit in every world.
+  E3. Gate outcomes and chosen constants are transmitted BEFORE full-run
+      artifacts; early-status boundary (R7-003) applies: gates may trigger
+      HALT only, never silent adjustment.
+
+F. METRICS (definitions bound; three, enumerated)
+  F1. M-RMSE (per world): over holdout envs {21..25} x tau in {0, 0.5, 1}
+      x evaluation grid of 2000 x-samples (eval-key RNG, fixed across all
+      methods): RMSE = sqrt(mean((predicted_mu_int - mu*)^2)).
+      MAF variants predict via their interventional branch; baselines via
+      their single prediction head with tau substituted.
+  F2. M-PSI (per world, train envs {1..20}): Spearman rho between ||psi_e||_2
+      and recorded rho_e.
+  F3. M-DAUROC (per world): D_e = mean_x |phi(x,tau=1).^T (U psi_e)| per
+      train env; labels = rho_e above/below the median of the 20; AUROC.
+
+G. PRE-REGISTERED VERDICT RULES (thresholds published BEFORE results)
+  G1. PASS requires ALL THREE:
+      P1: V-FULL achieves >= 25% relative reduction of M-RMSE vs the BEST
+          baseline (min over the four), median across the 30 worlds.
+      P2: median across worlds of M-PSI >= 0.6.
+      P3: median across worlds of M-DAUROC >= 0.8.
+  G2. KILL conditions (any one kills the usefulness claim):
+      K1: in the confound-heavy regime (rho_e >= 1 envs), ablating Gamma
+          (V-A0) matches V-FULL within 5% relative M-RMSE (median).
+      K2: V-SOFT matches V-FULL within 5% (median) — the do-mask wiring
+          adds nothing over soft conditioning.
+      K3: M-PSI < 0.3 median — artifact magnitudes uncorrelated with
+          planted confounding.
+      K4: V-ORAC fails to beat V-A0 — even with perfect mechanism, the
+          channel cannot identify (the fatal CFHM pattern).
+  G3. Anything not PASS and not KILL is reported as INCONCLUSIVE with the
+      failed/near-miss conditions named. INCONCLUSIVE is a real outcome.
+
+H. TRANSMISSION TO AUTHOR (R8 lean; narration allowed, zero evidentiary
+   weight). Documents, enumerated:
+   T1. STATUS.md pings at start, ~15 worlds, completion (<= 40 lines each).
+   T2. M1_ROWS.csv verbatim — schema exactly:
+       seed | variant_or_baseline | rmse_holdout | m_psi | m_dauroc
+       (rows: 30 worlds x 8 methods = 240).
+   T3. SUMMARY table verbatim — EXACT ROW SET (closed world, 12 rows):
+        1. g0a_pass_scale          2. g0b_lambda1_chosen
+        3. g0b_best_correlation    4. p1_vfull_rmse_median
+        5. p1_best_baseline_rmse_median (and WHICH baseline)
+        6. p1_relative_reduction   7. p2_mpsi_median
+        8. p3_mdauroc_median       9. k1_gap_percent
+       10. k2_gap_percent         11. k4_vaorac_minus_va0_rmse_median
+       12. verdict_label (one of PASS / KILL-Kn / INCONCLUSIVE — computed,
+           not narrated)
+   T4. DEVIATIONS.md verbatim (new root maf_v1/).
+   T5. sha256 manifest covering EVERY subtree of maf_v1/ including spec/
+       (lesson MANIFEST-GAP-001: no subtree omitted).
+   Full per-env tables, losses, configs stay repo-only, extractable on
+   dispute hash-matched.
+
+I. OPERATIONAL BINDINGS (lessons enforced)
+  I1. Outputs to NEW root maf_v1/ only; existing trees untouched.
+  I2. Atomic idempotent writes; runner creates ALL directories itself
+      (including logs/) BEFORE any wrapper redirects into them
+      (lessons D-014, D-017/-017a).
+  I3. Spec files present under maf_v1/spec/ before execution
+      (lesson AUTHOR-ERR-010).
+  I4. Any single fit exceeding 15 minutes: record deviation, continue.
+================================================================================
+END SPEC-M1
+================================================================================

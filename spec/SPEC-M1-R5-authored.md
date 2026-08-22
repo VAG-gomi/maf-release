@@ -1,0 +1,70 @@
+================================================================================
+SPEC-M1-R5: AUTHOR RESOLUTIONS TO DEVIATIONS 028-030 (BINDING)
+================================================================================
+
+AUTHOR-ERR-015: Three gaps confirmed (D-028..D-030). R5-001 binds the full
+randomness map; R5-002 retires my own contradictory "noise floor" phrasing;
+R5-003 pins the last free tie-break. No thresholds change; no criterion is
+touched; all bindings are pre-execution.
+
+R5-001 (D-028) — COMPLETE RNG ALLOCATION AND DRAW ORDER:
+  World parameters — stream WORLD, consumed once, in order:
+    1. theta: 8 iid N(0,1)/sqrt(8) draws.
+    2. kappa: 1 Uniform[0.5, 1.5] draw.
+    3. Per environment e = 1..25 ASCENDING: a_e (1 Uniform[-1,1] draw),
+       then rho_e (1 Uniform[0,2] draw).
+  Per-sample data — environments e = 1..25 ASCENDING; within an
+  environment, the bound sub-order:
+    4. SAMPLING stream: 400 observational x-vectors (5 iid standard
+       normal draws each, component order x1..x5).
+    5. If e in {1..10} (trial): SAMPLING stream continues — 100
+       interventional x-vectors (5 draws each), then 100 interventional
+       tau draws (uniform in {0,1}; unconfounded assignment lives in the
+       sampling stream BY BINDING, since it is part of the sampling
+       design, not the confounding mechanism).
+    6. ASSIGN stream: for the 400 observational rows in order — h_i
+       (1 standard normal draw) then tau_i (1 uniform draw; event iff
+       u < sigmoid(a_e + b_scale * 1.5 * rho_e * h_i)).
+    7. OUTCOME stream: eps for the 400 observational rows, then (trial
+       envs only) eps for the 100 interventional rows; iid N(0, 0.5^2).
+  b_scale (G0a ladder outcome) is a TRANSFORM applied at generation time
+    to b_e; it consumes NO additional draws — every ladder rerun uses the
+    identical streams and draws with only the transform changed.
+  EVAL stream, consumed in this exact order:
+    8. G0b auxiliary h_j: 100000 standard normal draws (R1-001).
+    9. Evaluation grids: for holdout envs e = 21..25 ASCENDING, 2000
+       x-vectors (5 draws each, component order) — 50000 draws total.
+    Grids are shared across all methods (F1/R4-003 stand).
+  RESERVED, UNUSED BY ANY CURRENT PROCEDURE (recorded, precedent: CFHM
+    R5 reserved model_init key): the MODEL_INIT stream and the ADAPT
+    stream. Adaptation determinism comes from torch.manual_seed
+    (world_int + 7000 + e) per R4-003; psi_new init is exactly zero
+    (no draw). These streams exist for future specs only; any future use
+    requires a new author binding.
+
+R5-002 (D-029) — V-ORAC RMSE REFERENCE, CONTRADICTION RESOLVED:
+  F1's target is ANALYTIC mu*(x, tau) with NO noise added to predictions
+  or targets — the evaluation grid consists of non-data points at which
+  outcome noise is undefined. Therefore V-ORAC's interventional branch
+  (exactly mu* per R3-002) yields M-RMSE IDENTICALLY 0.0.
+  Binding: V-ORAC T2 rows carry rmse = 0.0 exactly, as a declared
+  diagnostic placeholder, excluded from P1/K1/K2 arithmetic (R3-002
+  stands). The phrase "analytic truth + noise floor" in R4-003 is
+  RETIRED as an authoring error; "analytic truth, hence identically
+  zero RMSE" governs. V-ORAC's informative outputs remain M-PSI_VO and
+  M-DAUROC_VO (K4 arithmetic unchanged).
+
+R5-003 (D-030) — B-IRML TIE RULE:
+  If the two candidates' trial-env interventional RMSEs are exactly equal
+  (bit-exact comparison), select lambda_iv = 1.0 (the larger). The choice
+  is arbitrary but deterministic and now declared; selection outcome is
+  recorded per world in the repo-only config artifacts.
+
+EXECUTOR INSTRUCTIONS:
+  1. Append verbatim as maf_v1/spec/SPEC-M1-R5-authored.md; provenance commit.
+  2. Close DEVIATION-028..030 as resolved-by-R5-001..003 respectively.
+  3. Implementation UNBLOCKED. Run G0a then G0b; transmit gate outcomes
+     (b-scale, lambda1, best G0b correlation) BEFORE any full-run artifacts.
+================================================================================
+END SPEC-M1-R5
+================================================================================
