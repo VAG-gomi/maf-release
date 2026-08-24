@@ -1,0 +1,5 @@
+treated_rows=185
+control_rows=260
+treated_mean_RE78=6349.14353027027
+control_mean_RE78=4554.801126
+rct_ate=1794.34240427027

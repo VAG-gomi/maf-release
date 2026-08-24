@@ -1,0 +1,27 @@
+{
+  "observed": [
+    {
+      "seed": 2000,
+      "rmse_holdout": 0.1118193525252465,
+      "m_psi": 0.9082706766917292,
+      "m_dauroc": 0.8,
+      "fit_steps": 6000,
+      "adapt_env_id": 21
+    },
+    {
+      "seed": 2029,
+      "rmse_holdout": 0.1323046844352985,
+      "m_psi": 0.8210526315789473,
+      "m_dauroc": 0.94,
+      "fit_steps": 6000,
+      "adapt_env_id": 21
+    }
+  ],
+  "checks": {
+    "world_2000_rmse": true,
+    "world_2000_mpsi": true,
+    "world_2000_mdauroc": true,
+    "world_2029_rmse": false
+  },
+  "pass": false
+}

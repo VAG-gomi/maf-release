@@ -54,34 +54,41 @@ class MAFModel(torch.nn.Module):
         lambda1: float = 1e-3,
         weight_decay: float = 1e-4,
         seed: int | None = None,
+        input_dim: int = 5,
     ) -> None:
         super().__init__()
         if hidden != 16 or r != 2:
             raise ValueError("SPEC-M2 binds hidden=16 and r=2")
+        if int(input_dim) <= 0:
+            raise ValueError("input_dim must be positive")
         self.hidden = int(hidden)
         self.r = int(r)
+        self.input_dim = int(input_dim)
         self.lambda1 = float(lambda1)
         self.weight_decay = float(weight_decay)
         self.seed = None if seed is None else int(seed)
         if seed is not None:
             torch.manual_seed(int(seed))
-        self.encoder = torch.nn.Sequential(torch.nn.Linear(6, 16), torch.nn.Tanh(), torch.nn.Linear(16, 8))
+        self.encoder = torch.nn.Sequential(torch.nn.Linear(self.input_dim + 1, 16), torch.nn.Tanh(), torch.nn.Linear(16, 8))
         self.beta = torch.nn.Parameter(torch.empty(8))
         torch.nn.init.normal_(self.beta, mean=0.0, std=0.01)
         self.U = torch.nn.Parameter(torch.empty((8, 2)))
         torch.nn.init.normal_(self.U, mean=0.0, std=0.01)
-        self.psi = torch.nn.ParameterList([torch.nn.Parameter(torch.zeros(2)) for _ in range(N_TRAIN_ENVS)])
+        # G1.1(b): sized at fit time from the supplied environment count.
+        self.psi = torch.nn.ParameterList([])
         self._train_envs: list[dict[str, Any]] = []
         self._adapted_psi: dict[int, torch.Tensor] = {}
-        self._next_adapt_env_id = N_TRAIN_ENVS + 1
+        self._next_adapt_env_id = 1
         self._fit_report: FitReport | None = None
 
     def phi(self, x: torch.Tensor, tau: torch.Tensor) -> torch.Tensor:
+        if x.ndim != 2 or int(x.shape[1]) != self.input_dim:
+            raise ValueError(f"x must have shape (n, {self.input_dim})")
         return self.encoder(torch.cat([x, tau.reshape(-1, 1)], dim=1))
 
     def _psi_for_env(self, env_id: int) -> torch.Tensor:
         env_id = int(env_id)
-        if 1 <= env_id <= len(self.psi):
+        if 1 <= env_id <= len(self._train_envs):
             return self.psi[env_id - 1]
         if env_id in self._adapted_psi:
             return self._adapted_psi[env_id]
@@ -131,12 +138,24 @@ class MAFModel(torch.nn.Module):
         """
         if self._fit_report is not None:
             warnings.warn("refitting over previously fitted model", RuntimeWarning)
-        if len(environments) < N_TRAIN_ENVS:
-            raise ValueError("fit requires at least 20 training environments")
+        # G1.1(a): the generalized interface accepts the authored real-data
+        # environment cardinalities; no other validation is relaxed.
+        if len(environments) < 2:
+            raise ValueError("fit requires at least 2 training environments")
+        for env in environments:
+            for field in ("x_obs", "x_int"):
+                value = env.get(field)
+                if value is not None:
+                    array = np.asarray(value)
+                    if array.ndim != 2 or int(array.shape[1]) != self.input_dim:
+                        raise ValueError(f"{field} must have feature width {self.input_dim}")
         keyed = [(int(env.get("env_id", index + 1)), index, env) for index, env in enumerate(environments)]
         self._train_envs = [env for _, _, env in sorted(keyed, key=lambda item: (item[0], item[1]))[:N_TRAIN_ENVS]]
+        # G1.1(b): ParameterList size is set from len(environments) at fit time.
+        self.psi = torch.nn.ParameterList([torch.nn.Parameter(torch.zeros(2)) for _ in range(len(environments))])
         self._adapted_psi.clear()
-        self._next_adapt_env_id = N_TRAIN_ENVS + 1
+        # G1.1(c): new environment IDs follow the actual trained set.
+        self._next_adapt_env_id = len(self._train_envs) + 1
         started = time.monotonic()
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         for _epoch in range(300):
@@ -166,15 +185,16 @@ class MAFModel(torch.nn.Module):
                 loss.backward()
                 optimizer.step()
         duration = time.monotonic() - started
-        self._fit_report = FitReport(steps=300 * N_TRAIN_ENVS, epochs=300, environments=N_TRAIN_ENVS, duration_seconds=duration)
+        self._fit_report = FitReport(steps=300 * len(self._train_envs), epochs=300, environments=len(self._train_envs), duration_seconds=duration)
         return self._fit_report
 
     def adapt(self, x_obs: np.ndarray, tau_obs: np.ndarray, y_obs: np.ndarray, steps: int = 200, lr: float = 1e-2) -> AdaptReport:
         """Adapt one new environment by training only a fresh zero-initialized psi.
 
         The bound public signature does not carry an environment identifier. New
-        environments are therefore assigned deterministic slots 21, 22, ... in
-        adaptation-call order; the assigned slot is returned in ``AdaptReport``.
+        environments are therefore assigned deterministic slots immediately after
+        the trained environment set in adaptation-call order; the assigned slot is
+        returned in ``AdaptReport``.
         """
         if self._fit_report is None:
             raise RuntimeError("model not fitted: call fit() first")

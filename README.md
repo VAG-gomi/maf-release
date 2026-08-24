@@ -4,6 +4,8 @@ This is the canonical home of the **MAF model software**. MAF separates a global
 
 > **Validation boundary:** MAF was validated in synthetic confound-heavy environments with analytic ground truth across 30 worlds using pre-registered criteria and independent execution. It is **not validated on real-world data**.
 
+Real-world validation (SPEC-RW1/RW3): attempted on LaLonde (RCT ATE = 1794.34) and IHDP. Result: MAF did not outperform pooled regression baselines on either dataset. See research/real-world-validation/ for full evidence.
+
 ## The actual model code
 
 The reusable model implementation is actual Python source in [`src/maf/model.py`](src/maf/model.py). It defines the public `MAFModel` class, including initialization, fitting, environment adaptation, interventional prediction, observational prediction, artifact norms, and artifact scores.

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here in Keep a Changelog format.
 
+
+## [1.3.0] - 2026-08-24
+
+### Changed
+- Interface generalization: encoder accepts any feature width.
+- Real-world validation: attempted, result negative (see CHANGELOG for details).
+
 ## [1.1.1] - 2026-08-22
 
 ### Changed
