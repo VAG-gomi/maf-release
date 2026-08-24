@@ -1,0 +1,20 @@
+section,dataset,model,metric,value,seed,status,notes
+M,IHDP,M2a-pooled-regression,sqrt_PEHE_mean_holdout_r8_r9_r10,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 7 IHDP train environments.
+M,IHDP,M2b-per-environment-regression,sqrt_PEHE_mean_holdout_r8_r9_r10,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 7 IHDP train environments.
+M,IHDP,M2c-MAF,sqrt_PEHE_mean_holdout_r8_r9_r10,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 7 IHDP train environments.
+M,IHDP,M2c-MAF,maf_vs_pooled_pct,UNAVAILABLE,,BLOCKED,No MAF fit; no threshold evaluation.
+M,LaLonde-NSW,ground-truth,rct_ate_RE78,1794.34240427027,,PASS,Computed from preserved NSW treated/control files before any model run.
+M,LaLonde-NSW,M2a-PSID3-only,interventional_ATE_estimate_and_distance,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 2 LaLonde environments.
+M,LaLonde-NSW,M2a-NSW-oracle-reference,interventional_ATE_estimate_and_distance,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 2 LaLonde environments.
+M,LaLonde-NSW,M2c-MAF,interventional_ATE_estimate_and_distance,UNAVAILABLE,,BLOCKED,MAF certified fit contract requires >=20 training environments; SPEC-RW1 binds 2 LaLonde environments.
+M,IHDP,all,psi_norms_and_confounding_proxy_correlation,UNAVAILABLE,,BLOCKED,No MAF fit.
+C,Retraction-Watch-citation-network,network-construction,nodes_total,8507,,PASS,500 sampled retracted nodes plus fetched citing nodes.
+C,Retraction-Watch-citation-network,network-construction,edges_total,8213,,PASS,Deduplicated citing-to-cited edges from 500 OpenCitations responses.
+C,Retraction-Watch-citation-network,C3a-fragility-only,precision_at_50_temporal_bootstrap_mean,UNAVAILABLE,,BLOCKED,"Certified CFHM package requires exactly n_nodes=200; constructed graph has 8,507 nodes."
+C,Retraction-Watch-citation-network,C3b-CFHM-full,precision_at_50_temporal_bootstrap_mean,UNAVAILABLE,,BLOCKED,"Certified CFHM package requires exactly n_nodes=200; constructed graph has 8,507 nodes."
+C,Retraction-Watch-citation-network,C3b-CFHM-full,transmission_coefficient_retracted_parent_edges,UNAVAILABLE,,BLOCKED,No CFHM fit.
+L,Air-Quality,V-LHE,RMSE_holdout_seed_8000,1.4478283552,8000,OBSERVED_PARTIAL,One smoke run completed; full 20 paired seeds not completed.
+L,Air-Quality,B-PASS,RMSE_holdout_seed_8000,1.43889788338,8000,OBSERVED_PARTIAL,One smoke run completed; full 20 paired seeds not completed.
+L,Air-Quality,paired-comparison,win_fraction,UNAVAILABLE,,INCOMPLETE,Only 0/1 smoke wins; not promoted to the pre-registered 20-run metric.
+L,Appliances,V-LHE,paired-run,UNAVAILABLE,,BLOCKED,Certified acquisition fallback raised RuntimeError: unable to find continuous fallback query.
+L,Appliances,B-PASS,paired-run,UNAVAILABLE,,NOT_STARTED,Paired set stopped after V-LHE runtime failure; no result claimed.

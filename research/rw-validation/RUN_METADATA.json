@@ -1,0 +1,67 @@
+{
+  "spec": "SPEC-RW1 v1.0",
+  "raw_source": "/home/ubuntu/ds1_raw",
+  "raw_reused_without_redownload": true,
+  "models_run": {
+    "MAF": false,
+    "CFHM": false,
+    "LHE": "partial_one_seed_smoke_only"
+  },
+  "thresholds_frozen_before_models": true,
+  "maf_hyperparameters": {
+    "hidden": 16,
+    "r": 2,
+    "lambda1": 0.001
+  },
+  "cfhm_network": {
+    "sampling_seed": 7000,
+    "valid_original_doi_rows": 69174,
+    "sample_size": 500,
+    "sample_with_repeated_original_doi": 29,
+    "query_count_target": 500,
+    "response_file_count": 500,
+    "node_count_from_edges": 8507,
+    "sampled_retracted_nodes": 500,
+    "edge_count_unique": 8213,
+    "calls_log": "cfhm_network/opencitations_calls.jsonl",
+    "sample_file": "cfhm_network/sample_500.csv",
+    "edges_file": "cfhm_network/edges.csv",
+    "note": "No model fit performed in this script; CFHM package contract is checked separately."
+  },
+  "lhe_preprocessing": {
+    "air_quality": {
+      "source_archive": "raw/DS-F/air+quality.zip",
+      "source_member": "AirQualityUCI.csv",
+      "feature": "T",
+      "target": "CO(GT)",
+      "blank_rows_dropped": 114,
+      "missing_or_invalid_rows_dropped": 2013,
+      "final_usable_rows": 7344,
+      "feature_min": -1.9,
+      "feature_max": 44.6,
+      "target_min": 0.1,
+      "target_max": 11.9,
+      "derived_file": "data/air_quality_T_CO.csv"
+    },
+    "appliances": {
+      "source_archive": "raw/DS-F/appliances+energy+prediction.zip",
+      "source_member": "energydata_complete.csv",
+      "feature": "T1",
+      "target": "Appliances",
+      "missing_or_invalid_rows_dropped": 0,
+      "final_usable_rows": 19735,
+      "feature_min": 16.79,
+      "feature_max": 26.26,
+      "target_min": 10.0,
+      "target_max": 1080.0,
+      "derived_file": "data/appliances_T1.csv"
+    },
+    "preprocessing": [
+      "No raw input bytes were changed.",
+      "Air Quality: semicolon parsing, comma-decimal conversion, -200 treated as missing, blank rows dropped, rows with missing/invalid T or CO(GT) dropped.",
+      "Appliances: comma parsing with leading-space tolerance; rows with missing/invalid T1 or Appliances dropped; no missing values were expected.",
+      "No feature or target scaling was applied in preprocessing; LHE receives the single selected feature and target as finite real values."
+    ]
+  },
+  "rct_ate": 1794.34240427027
+}
