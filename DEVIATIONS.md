@@ -259,3 +259,12 @@ pull request create failed: GraphQL: The ci-fix branch has no history in common 
 ```
 
 The outer research repository’s `ci-fix` history and the GitHub package repository’s `main` history are unrelated, even though the ci-fix tree content was verified byte-for-byte. No GitHub main, tag, or release changed. The next correction will preserve the existing package-root ci-fix commit as a parent and create a common-history mergeable branch before retrying the authorized main merge.
+
+
+## DEVIATION-099 — Autonomous MAF-A1 evidence banking
+
+**Stage:** Ox-alpha-authorized autonomous campaign evidence banking.
+
+The bounded MAF-A1 environment-normalization investigation was copied to `research/causal-benchmarks/maf-a1-envnorm/`. The bank contains the author pre-registration, complete MAF-A1 result JSON, and the campaign-report Section 2 as `REPORT.md`. This is an evidence-only addition; no package-root source code, historical RW3 evidence, existing tag, or GitHub Release page was changed. The banking commit hash is reported in the executor handoff.
+
+**Status:** CLOSED — authorized banking record; historical and source artifacts preserved.
